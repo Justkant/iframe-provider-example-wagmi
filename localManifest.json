@@ -1,0 +1,47 @@
+{
+  "$schema": "https://live-app-catalog.ledger.com/schema.json",
+  "id": "iframe-provider-wagmi",
+  "name": "Ledger iframe provider wagmi",
+  "private": true,
+  "url": "https://dapp-browser.apps.ledger.com/v2/",
+  "params": {
+    "dappUrl": "http://localhost:5173/",
+    "nanoApp": "Ethereum",
+    "dappName": "Ledger iframe provider wagmi",
+    "networks": [
+      {
+        "currency": "ethereum",
+        "chainID": 1,
+        "nodeURL": "https://eth-dapps.api.live.ledger.com"
+      }
+    ]
+  },
+  "homepageUrl": "http://localhost:5173/",
+  "icon": "https://viem.sh/icon-dark.png",
+  "platforms": ["android", "ios", "desktop"],
+  "apiVersion": "^2.0.0",
+  "manifestVersion": "2",
+  "branch": "stable",
+  "categories": ["defi"],
+  "currencies": ["ethereum"],
+  "content": {
+    "shortDescription": {
+      "en": "Ledger iframe provider wagmi"
+    },
+    "description": {
+      "en": "Ledger iframe provider wagmi"
+    }
+  },
+  "permissions": [
+    "account.list",
+    "account.request",
+    "currency.list",
+    "message.sign",
+    "transaction.signAndBroadcast",
+    "wallet.info",
+    "wallet.userId"
+  ],
+  "domains": ["https://"],
+  "visibility": "complete",
+  "overrides": []
+}
