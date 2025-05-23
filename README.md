@@ -1,54 +1,77 @@
-# React + TypeScript + Vite
+# Ledger EVM iframe-provider example with wagmi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This template provides a minimal example to get wagmi working with Ledger iframe-provider in the dApp-browser v2.
 
-Currently, two official plugins are available:
+We need to create an EIP-1193 compatible provider from the iframe-provider, you can do it this way
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```ts
+import {
+  IFrameEthereumProvider as IFrameEthereumProviderClass,
+  type IFrameEthereumProviderEventTypes,
+} from "@ledgerhq/iframe-provider";
+import { custom, type EIP1193EventMap } from "viem";
 
-## Expanding the ESLint configuration
+class EIP1193Provider extends IFrameEthereumProviderClass {
+  /**
+   * EIP-1193 request interface to send request.
+   * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-1193.md#request
+   * @param args request arguments
+   * @param args.method method to send to the parent provider
+   * @param args.params parameters to send
+   */
+  public async request<TParams = any[], TResult = any>({
+    method,
+    params,
+  }: {
+    method: string;
+    params?: TParams;
+  }): Promise<TResult> {
+    return this.send<TParams, TResult>(method, params);
+  }
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+  removeListener<
+    T extends IFrameEthereumProviderEventTypes | keyof EIP1193EventMap
+  >(
+    event: T,
+    fn?: ((...args: any[]) => void) | undefined,
+    context?: any,
+    once?: boolean
+  ): this {
+    return this.off(
+      event as IFrameEthereumProviderEventTypes,
+      fn,
+      context,
+      once
+    );
+  }
+}
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+const provider = new EIP1193Provider();
+const transport = custom(provider);
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then we can use this provider and the transport created with viem to create the wagmi config
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```ts
+import { createConfig } from "wagmi";
+import { mainnet } from "wagmi/chains";
+import { injected } from "wagmi/connectors";
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
+const config = createConfig({
+  chains: [mainnet],
+  connectors: [
+    injected({
+      target() {
+        return {
+          id: "some random id, see docs",
+          name: "some random name, see docs",
+          provider: provider,
+        };
+      },
+    }),
+  ],
+  transports: {
+    [mainnet.id]: transport,
   },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+});
 ```
